@@ -1,6 +1,7 @@
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings({"checkstyle:Indentation", "checkstyle:MissingJavadocType"})
 public class OnlineCoursesAnalyzer {
 
 
@@ -12,25 +13,25 @@ public class OnlineCoursesAnalyzer {
         return null;
     }
 
-    public Map<String, Integer> getPtcpCountByInstAndSubject(){
+    public Map<String, Integer> getPtcpCountByInstAndSubject() {
         return null;
     }
 
-    public Map<String, List<List<String>>> getCourseListOfInstructor(){
+    public Map<String, List<List<String>>> getCourseListOfInstructor() {
         return null;
     }
 
-    public List<String> getCourses(int topK, String by){
+    public List<String> getCourses(int topK, String by) {
         return null;
     }
 
     public List<String> searchCourses(String courseSubject, double
-            percentAudited, double totalCourseHours){
+            percentAudited, double totalCourseHours) {
         return null;
     }
 
     public List<String> recommendCourses(int age, int gender, int
-            isBachelorOrHigher){
+            isBachelorOrHigher) {
         return null;
     }
 }
