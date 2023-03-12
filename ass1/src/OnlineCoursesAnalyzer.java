@@ -1,20 +1,20 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings({"checkstyle:Indentation", "checkstyle:MissingJavadocType",
         "checkstyle:MissingJavadocMethod"})
 public class OnlineCoursesAnalyzer {
-    String datasetPath;
+    Stream<Course> courseStream;
 
     public static class Course {
         CourseBasicInfo courseBasicInfo; //String data information
         CourseDetail courseDetail; //Int data information
         CourseAnalyzer courseAnalyzer; //A part of double data information
-        CourseParticipantAnalyzer courseParticipantAnalyzer; //Another part of double data info
+        CoursePtcpAnalyzer coursePtcpAnalyzer; //Another part of double data info
 
         public static class CourseBasicInfo {
             String institution; //online course holders
@@ -76,14 +76,14 @@ public class OnlineCoursesAnalyzer {
             }
         }
 
-        public static class CourseParticipantAnalyzer {
+        public static class CoursePtcpAnalyzer {
             double medianHourForCertify; //median hours for certification
             double medianAge; //median age of the participants
             double pcOfMale; //the percent of the male
             double pcOfFemale; //the percent of the female
             double pcOfBachelor; //the percent of bachelor's degree of higher
 
-            public CourseParticipantAnalyzer(double medianHourForCertify, double medianAge,
+            public CoursePtcpAnalyzer(double medianHourForCertify, double medianAge,
                                              double pcOfMale, double pcOfFemale,
                                              double pcOfBachelor) {
                 this.medianHourForCertify = medianHourForCertify;
@@ -104,40 +104,210 @@ public class OnlineCoursesAnalyzer {
                     Double.parseDouble(courseInfo[12]), Double.parseDouble(courseInfo[13]),
                     Double.parseDouble(courseInfo[14]), Double.parseDouble(courseInfo[15]),
                     Double.parseDouble(courseInfo[16]), Double.parseDouble(courseInfo[17]));
-            this.courseParticipantAnalyzer = new CourseParticipantAnalyzer(
+            this.coursePtcpAnalyzer = new CoursePtcpAnalyzer(
                     Double.parseDouble(courseInfo[18]), Double.parseDouble(courseInfo[19]),
                     Double.parseDouble(courseInfo[20]), Double.parseDouble(courseInfo[21]),
                     Double.parseDouble(courseInfo[22]));
         }
 
+        public static class InstSubject {
+            String instSubject;
+            int ptcp;
+
+            public InstSubject(String instSubject, int ptcp) {
+                this.instSubject = instSubject;
+                this.ptcp = ptcp;
+            }
+
+            public String getInstSubject() {
+                return instSubject;
+            }
+
+            public int getPtcp() {
+                return ptcp;
+            }
+        }
+
+        public static class InstructorCourse {
+            String instructors;
+            String courseName;
+            int single;
+
+            public InstructorCourse(String instructors, String courseName) {
+                this.instructors = instructors;
+                this.courseName = courseName;
+            }
+
+            public InstructorCourse(String instructors, String courseName, int single) {
+                this.instructors = instructors;
+                this.courseName = courseName;
+                this.single = single;
+            }
+
+            public String getInstructors() {
+                return instructors;
+            }
+
+            public String getCourseName() {
+                return courseName;
+            }
+        }
+
+        public static class TopCourse{
+            String courseName;
+            double hours;
+            int ptcp;
+
+            public TopCourse(String courseName, double hours, int ptcp) {
+                this.courseName = courseName;
+                this.hours = hours;
+                this.ptcp = ptcp;
+            }
+
+            public String getCourseName() {
+                return courseName;
+            }
+
+            public double getHours() {
+                return hours;
+            }
+
+            public int getPtcp() {
+                return ptcp;
+            }
+        }
+
+        public String getInstitution() {
+            return courseBasicInfo.institution;
+        }
+
+        public int getPtcp() {
+            return courseDetail.participants;
+        }
+
+        public String getInstSubject() {
+            return courseBasicInfo.institution + "-" + courseBasicInfo.courseSubject;
+        }
+
+        public String getInstructors() {
+            return courseBasicInfo.instructors;
+        }
+
+        public String getCourseTitle() {
+            return courseBasicInfo.courseTitle;
+        }
+
+        public double getHours(){
+            return courseAnalyzer.totalCourseHours;
+        }
     }
 
 
-    public OnlineCoursesAnalyzer(String datasetPath) {
-        this.datasetPath = datasetPath;
+    public OnlineCoursesAnalyzer(String datasetPath) throws IOException {
+        this.courseStream = readCourseInfo(datasetPath);
     }
 
-    public Stream<Course> readCourseInfo() throws IOException {
-        return Files.lines(Paths.get(this.datasetPath))
+    public Stream<Course> readCourseInfo(String datasetPath) throws IOException {
+        return Files.lines(Paths.get(datasetPath))
                 .map(l -> l.split(","))
                 .filter(p -> p.length == 23)
                 .map(Course::new);
     }
 
     public Map<String, Integer> getPtcpCountByInst() {
-        return null;
+        Map<String, Integer> instPtcp = courseStream.collect(
+                Collectors.groupingBy(Course::getInstitution,
+                        Collectors.summingInt(Course::getPtcp)));
+        return instPtcp.entrySet().stream().sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (oldVal, newVal) -> oldVal,
+                        LinkedHashMap::new));
     }
 
     public Map<String, Integer> getPtcpCountByInstAndSubject() {
-        return null;
+        Map<String, Integer> instSubjectPtcp = courseStream.map(l ->
+                        new Course.InstSubject(l.getInstSubject(), l.getPtcp()))
+                .collect(Collectors.groupingBy(Course.InstSubject::getInstSubject,
+                        Collectors.summingInt(Course.InstSubject::getPtcp)));
+        return instSubjectPtcp.entrySet().stream().sorted(
+                Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed()
+                        .thenComparing(Map.Entry::getKey))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (oldVal, newVal) -> oldVal,
+                        LinkedHashMap::new));
     }
 
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
-        return null;
+        List<Course.InstructorCourse> instructorsCourse = courseStream.map(l ->
+                new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
+                .toList();
+        List<Course.InstructorCourse> instorCourseList = new ArrayList<>();
+        for (Course.InstructorCourse instructorCourse : instructorsCourse) {
+            String[] keys = instructorCourse.instructors.split(", ");
+            String value = instructorCourse.courseName;
+            if (keys.length == 1) {
+                instorCourseList.add(new Course.InstructorCourse(keys[0], value, 1));
+            } else {
+                for (String key : keys) {
+                    instorCourseList.add(new Course.InstructorCourse(key, value));
+                }
+            }
+        }
+
+        Map<String, List<Map<Integer, String>>> res = instorCourseList.stream().distinct().collect(
+                Collectors.groupingBy(Course.InstructorCourse::getInstructors,
+                        Collectors.mapping(a -> {
+                            Map<Integer, String> map = new HashMap<>();
+                            map.put(a.single, a.courseName);
+                            return map;
+                        }, Collectors.toList())));
+        Map<String, List<List<String>>> courseListOfInstructor = new HashMap<>();
+        for (Map.Entry<String, List<Map<Integer, String>>> entry : res.entrySet()) {
+            List<Map<Integer, String>> mapValue = entry.getValue();
+            List<String> list0 = new ArrayList<>();
+            List<String> list1 = new ArrayList<>();
+            for (Map<Integer, String> integerStringMap : mapValue) {
+                if (integerStringMap.containsKey(1)) {
+                    list0.add(integerStringMap.get(1));
+                } else {
+                    list1.add(integerStringMap.get(1));
+                }
+            }
+            List<List<String>> lists = new ArrayList<>();
+            lists.add(list0);
+            lists.add(list1);
+            String mapKey = entry.getKey();
+            courseListOfInstructor.put(mapKey, lists);
+        }
+        return courseListOfInstructor;
     }
 
     public List<String> getCourses(int topK, String by) {
-        return null;
+        List<String> topCourses = new ArrayList<>();
+        if (by.equals("hours")) {
+            Map<String, Double> tmp;
+            tmp = courseStream.map(l ->
+                    new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
+                    .collect(Collectors.groupingBy(Course.TopCourse::getCourseName,
+                            Collectors.summingDouble(Course.TopCourse::getHours)));
+            topCourses = tmp.entrySet().stream().sorted(
+                    Comparator.comparing(Map.Entry<String, Double>::getValue).reversed()
+                    .thenComparing(Map.Entry::getKey)).limit(topK)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        } else {
+            Map<String, Integer> tmp;
+            tmp = courseStream.map(l ->
+                            new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
+                    .collect(Collectors.groupingBy(Course.TopCourse::getCourseName,
+                            Collectors.summingInt(Course.TopCourse::getPtcp)));
+            topCourses = tmp.entrySet().stream().sorted(
+                            Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed()
+                                    .thenComparing(Map.Entry::getKey)).limit(topK)
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        }
+        return topCourses;
     }
 
     public List<String> searchCourses(String courseSubject, double
