@@ -1,7 +1,10 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -84,8 +87,8 @@ public class OnlineCoursesAnalyzer {
             double pcOfBachelor; //the percent of bachelor's degree of higher
 
             public CoursePtcpAnalyzer(double medianHourForCertify, double medianAge,
-                                             double pcOfMale, double pcOfFemale,
-                                             double pcOfBachelor) {
+                                      double pcOfMale, double pcOfFemale,
+                                      double pcOfBachelor) {
                 this.medianHourForCertify = medianHourForCertify;
                 this.medianAge = medianAge;
                 this.pcOfMale = pcOfMale;
@@ -153,7 +156,7 @@ public class OnlineCoursesAnalyzer {
             }
         }
 
-        public static class TopCourse{
+        public static class TopCourse {
             String courseName;
             double hours;
             int ptcp;
@@ -177,6 +180,70 @@ public class OnlineCoursesAnalyzer {
             }
         }
 
+        public static class SearchCourse {
+            String courseName;
+            double pcOfAudit;
+            double hours;
+
+            public SearchCourse(String courseName, double pcOfAudit, double hours) {
+                this.courseName = courseName;
+                this.pcOfAudit = pcOfAudit;
+                this.hours = hours;
+            }
+
+            public String getCourseName() {
+                return courseName;
+            }
+
+            public double getPcOfAudit() {
+                return pcOfAudit;
+            }
+
+            public double getHours() {
+                return hours;
+            }
+        }
+
+        public static class RecommendCourse {
+            String courseId;
+            String courseName;
+            double medianAge;
+            double pcOfMale;
+            double pcOfBachelor;
+            double similarity;
+            Date launchDate;
+
+            public RecommendCourse(String courseId, String courseName, double medianAge, double pcOfMale,
+                                   double pcOfBachelor, String launchDate, int age,
+                                   int gender, int isBachelorOrHigher) throws ParseException {
+                this.courseId = courseId;
+                this.courseName = courseName;
+                this.medianAge = medianAge;
+                this.pcOfMale = pcOfMale;
+                this.pcOfBachelor = pcOfBachelor;
+                SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                this.launchDate = format.parse(launchDate);
+                calSimilarity(age, gender, isBachelorOrHigher);
+            }
+
+            public void calSimilarity(int age, int gender, int isBachelorOrHigher) {
+                this.similarity = Math.pow((double) age - this.medianAge, 2)
+                        + Math.pow(gender * 100 - this.pcOfMale, 2)
+                        + Math.pow(isBachelorOrHigher * 100 - this.pcOfBachelor, 2);
+            }
+
+            public double getSimilarity() {
+                return similarity;
+            }
+            public String getCourseId() {
+                return courseId;
+            }
+
+            public String getCourseName() {
+                return courseName;
+            }
+        }
+
         public String getInstitution() {
             return courseBasicInfo.institution;
         }
@@ -197,8 +264,32 @@ public class OnlineCoursesAnalyzer {
             return courseBasicInfo.courseTitle;
         }
 
-        public double getHours(){
+        public double getHours() {
             return courseAnalyzer.totalCourseHours;
+        }
+
+        public double getPcOfAudit() {
+            return courseAnalyzer.pcOfAudit;
+        }
+
+        public String getCourseId() {
+            return courseBasicInfo.courseNumber;
+        }
+
+        public double getMidAge() {
+            return coursePtcpAnalyzer.medianAge;
+        }
+
+        public double getPcOfMale() {
+            return coursePtcpAnalyzer.pcOfMale;
+        }
+
+        public double getPcOfBachelor() {
+            return coursePtcpAnalyzer.pcOfBachelor;
+        }
+
+        public String getLaunchDate() {
+            return courseBasicInfo.launchDate;
         }
     }
 
@@ -230,8 +321,8 @@ public class OnlineCoursesAnalyzer {
                 .collect(Collectors.groupingBy(Course.InstSubject::getInstSubject,
                         Collectors.summingInt(Course.InstSubject::getPtcp)));
         return instSubjectPtcp.entrySet().stream().sorted(
-                Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed()
-                        .thenComparing(Map.Entry::getKey))
+                        Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed()
+                                .thenComparing(Map.Entry::getKey))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (oldVal, newVal) -> oldVal,
                         LinkedHashMap::new));
@@ -239,7 +330,7 @@ public class OnlineCoursesAnalyzer {
 
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
         List<Course.InstructorCourse> instructorsCourse = courseStream.map(l ->
-                new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
+                        new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
                 .toList();
         List<Course.InstructorCourse> instorCourseList = new ArrayList<>();
         for (Course.InstructorCourse instructorCourse : instructorsCourse) {
@@ -287,12 +378,12 @@ public class OnlineCoursesAnalyzer {
         if (by.equals("hours")) {
             Map<String, Double> tmp;
             tmp = courseStream.map(l ->
-                    new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
+                            new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
                     .collect(Collectors.groupingBy(Course.TopCourse::getCourseName,
                             Collectors.summingDouble(Course.TopCourse::getHours)));
             topCourses = tmp.entrySet().stream().sorted(
-                    Comparator.comparing(Map.Entry<String, Double>::getValue).reversed()
-                    .thenComparing(Map.Entry::getKey)).limit(topK)
+                            Comparator.comparing(Map.Entry<String, Double>::getValue).reversed()
+                                    .thenComparing(Map.Entry::getKey)).limit(topK)
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
         } else {
@@ -312,11 +403,36 @@ public class OnlineCoursesAnalyzer {
 
     public List<String> searchCourses(String courseSubject, double
             percentAudited, double totalCourseHours) {
-        return null;
+        String regex = ".*" + courseSubject.toLowerCase() + ".*";
+        return courseStream.map(l ->
+                        new Course.SearchCourse(l.getCourseTitle(), l.getPcOfAudit(), l.getHours()))
+                .filter(obj -> obj.pcOfAudit >= percentAudited)
+                .filter(obj -> obj.hours <= totalCourseHours)
+                .filter(obj -> obj.courseName.toLowerCase().matches(regex))
+                .map(Course.SearchCourse::getCourseName).sorted().toList();
     }
 
     public List<String> recommendCourses(int age, int gender, int
             isBachelorOrHigher) {
-        return null;
+        Map<String, Course.RecommendCourse> filterSameId = courseStream.map(l -> {
+            try {
+                return new Course.RecommendCourse(l.getCourseId(), l.getCourseTitle(),
+                        l.getMidAge(), l.getPcOfMale(), l.getPcOfBachelor(), l.getLaunchDate(),
+                        age, gender, isBachelorOrHigher);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toMap(Course.RecommendCourse::getCourseId, Function.identity(),
+                (o1, o2) -> o1.launchDate.compareTo(o2.launchDate) > 0 ? o1 : o2));
+        List<Course.RecommendCourse> intermediateList = new ArrayList<>(filterSameId.values());
+        Map<String, Course.RecommendCourse> filterSameTitle = intermediateList.stream()
+                .collect(Collectors.toMap(Course.RecommendCourse::getCourseName,
+                        Function.identity(),
+                        (o1, o2) -> o1.launchDate.compareTo(o2.launchDate) > 0 ? o1 : o2));
+        List<Course.RecommendCourse> filterList = new ArrayList<>(filterSameTitle.values());
+        return filterList.stream().sorted(
+                Comparator.comparingDouble(Course.RecommendCourse::getSimilarity)
+                        .thenComparing(Course.RecommendCourse::getCourseName))
+                .limit(10).map(obj -> obj.courseName).toList();
     }
 }
