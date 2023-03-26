@@ -122,7 +122,7 @@ public class OnlineCoursesAnalyzer {
     }
 
     //4
-    public List<String> getCourses(int topK, String by) {
+    /*public List<String> getCourses(int topK, String by) {
         List<String> topCourses = new ArrayList<>();
         if (by.equals("hours")) {
             Map<String, Double> tmp;
@@ -146,6 +146,23 @@ public class OnlineCoursesAnalyzer {
                                     .thenComparing(Map.Entry::getKey)).limit(topK)
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
+        }
+        return topCourses;
+    }*/
+    public List<String> getCourses(int topK, String by) {
+        List<String> topCourses = new ArrayList<>();
+        if (by.equals("hours")) {
+            topCourses = courses.stream().map(l ->
+                            new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
+                    .sorted(Comparator.comparingDouble(Course.TopCourse::getHours)
+                            .thenComparing(Course.TopCourse::getCourseName).reversed())
+                    .map(Course.TopCourse::getCourseName).distinct().limit(topK).toList();
+        } else {
+            topCourses = courses.stream().map(l ->
+                            new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
+                    .sorted(Comparator.comparingDouble(Course.TopCourse::getPtcp)
+                            .thenComparing(Course.TopCourse::getCourseName).reversed())
+                    .map(Course.TopCourse::getCourseName).distinct().limit(topK).toList();
         }
         return topCourses;
     }
