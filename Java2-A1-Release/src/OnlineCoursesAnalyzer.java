@@ -154,11 +154,12 @@ public class OnlineCoursesAnalyzer {
     public List<String> searchCourses(String courseSubject, double percentAudited, double totalCourseHours) {
         String regex = ".*" + courseSubject.toLowerCase() + ".*";
         return courses.stream().map(l ->
-                        new Course.SearchCourse(l.getCourseTitle(), l.getPcOfAudit(), l.getHours()))
+                        new Course.SearchCourse(l.getCourseTitle(), l.getCourseSubject()
+                                , l.getPcOfAudit(), l.getHours()))
                 .filter(obj -> obj.pcOfAudit >= percentAudited)
                 .filter(obj -> obj.hours <= totalCourseHours)
-                .filter(obj -> obj.courseName.toLowerCase().matches(regex))
-                .map(Course.SearchCourse::getCourseName).sorted().toList();
+                .filter(obj -> obj.courseSubject.toLowerCase().matches(regex))
+                .map(Course.SearchCourse::getCourseName).distinct().sorted().toList();
     }
 
     //6
@@ -412,11 +413,13 @@ class Course {
 
     public static class SearchCourse {
         String courseName;
+        String courseSubject;
         double pcOfAudit;
         double hours;
 
-        public SearchCourse(String courseName, double pcOfAudit, double hours) {
+        public SearchCourse(String courseName, String courseSubject, double pcOfAudit, double hours) {
             this.courseName = courseName;
+            this.courseSubject = courseSubject;
             this.pcOfAudit = pcOfAudit;
             this.hours = hours;
         }
@@ -479,6 +482,7 @@ class Course {
         public String getCourseName() {
             return courseName;
         }
+
 
 
     }
@@ -555,6 +559,9 @@ class Course {
         this.avgPcOfBachelor = avgPcOfBachelor;
     }
 
+    public String getCourseSubject(){
+        return this.courseBasicInfo.courseSubject;
+    }
 }
 /*
 class Course {
