@@ -4,14 +4,12 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
 
 /**
  * This is just a demo for you, please run it on JDK17.
@@ -22,11 +20,11 @@ public class OnlineCoursesAnalyzer {
 
     List<Course> courses = new ArrayList<>();
 
-    public OnlineCoursesAnalyzer(String datasetPath) throws IOException {
+    public OnlineCoursesAnalyzer(String datasetPath) {
         readCourseInfo(datasetPath);
     }
 
-    public void readCourseInfo(String datasetPath) throws IOException {
+    public void readCourseInfo(String datasetPath) {
         BufferedReader br = null;
         String line;
         try {
@@ -159,11 +157,6 @@ public class OnlineCoursesAnalyzer {
 
     //6
     public List<String> recommendCourses(int age, int gender, int isBachelorOrHigher) {
-        /*for (int i = 0; i < this.courses.size(); i++) {
-            if (courses.get(i).getCourseId().equals("PH525.2x")){
-                System.out.println(courses.get(i).courseBasicInfo.courseTitle);
-            }
-        }*/
         for (int i = 0; i < courses.size(); i++) {
             if (courses.get(i).avgPcOfMale != 0) continue;
             String id = courses.get(i).courseBasicInfo.courseNumber;
@@ -198,30 +191,12 @@ public class OnlineCoursesAnalyzer {
             }
         }).collect(Collectors.toMap(Course.RecommendCourse::getCourseId, Function.identity(),
                 (o1, o2) -> o1.launchDate.compareTo(o2.launchDate) > 0 ? o1 : o2));
-        /*for (String id : filterSameId.keySet()) {
-            if (filterSameId.get(id).courseId.equals("PH525.2x")){
-                System.out.println(filterSameId.get(id).courseName);
-            }
-        }*/
         List<Course.RecommendCourse> intermediateList = new ArrayList<>(filterSameId.values());
         Map<String, Course.RecommendCourse> filterSameTitle = intermediateList.stream()
                 .collect(Collectors.toMap(Course.RecommendCourse::getCourseName,
                         Function.identity(),
                         (o1, o2) -> o1.similarity - o2.similarity > 0 ? o2 : o1));
-        /*for (String id : filterSameTitle.keySet()) {
-            if (filterSameTitle.get(id).courseId.equals("PH525.2x")) {
-                System.out.println(filterSameTitle.get(id).courseName);
-            }
-        }*/
         List<Course.RecommendCourse> filterList = new ArrayList<>(filterSameTitle.values());
-        /*List<Course.RecommendCourse> a = filterList.stream().sorted(
-                        Comparator.comparingDouble(Course.RecommendCourse::getSimilarity)
-                                .thenComparing(Course.RecommendCourse::getCourseName))
-                .limit(10).toList();
-        for (int i = 0; i < a.size(); i++) {
-            Course.RecommendCourse tmp = a.get(i);
-            System.out.println(tmp.courseId+": "+tmp.courseName+": "+tmp.similarity);
-        }*/
         return filterList.stream().sorted(
                         Comparator.comparingDouble(Course.RecommendCourse::getSimilarity)
                                 .thenComparing(Course.RecommendCourse::getCourseName))
