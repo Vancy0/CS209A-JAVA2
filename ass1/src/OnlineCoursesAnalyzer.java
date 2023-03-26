@@ -3,7 +3,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -213,8 +219,8 @@ public class OnlineCoursesAnalyzer {
             double similarity;
             Date launchDate;
 
-            public RecommendCourse(String courseId, String courseName, double medianAge, double pcOfMale,
-                                   double pcOfBachelor, String launchDate, int age,
+            public RecommendCourse(String courseId, String courseName, double medianAge,
+                                   double pcOfMale, double pcOfBachelor, String launchDate, int age,
                                    int gender, int isBachelorOrHigher) throws ParseException {
                 this.courseId = courseId;
                 this.courseName = courseName;
@@ -235,6 +241,7 @@ public class OnlineCoursesAnalyzer {
             public double getSimilarity() {
                 return similarity;
             }
+
             public String getCourseId() {
                 return courseId;
             }
