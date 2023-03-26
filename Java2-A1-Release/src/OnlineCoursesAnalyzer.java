@@ -76,7 +76,7 @@ public class OnlineCoursesAnalyzer {
     }
 
     //3
-    public Map<String, List<List<String>>> getCourseListOfInstructor() {
+    /*public Map<String, List<List<String>>> getCourseListOfInstructor() {
         List<Course.InstructorCourse> instructorsCourse = courses.stream().map(l ->
                         new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
                 .toList();
@@ -119,6 +119,56 @@ public class OnlineCoursesAnalyzer {
             courseListOfInstructor.put(mapKey, lists);
         }
         return courseListOfInstructor;
+    }*/
+
+    public Map<String, List<List<String>>> getCourseListOfInstructor() {
+        List<Course.InstructorCourse> instructorsCourse = courses.stream().map(l ->
+                        new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
+                .toList();
+        Map<String, List<List<String>>> map = new HashMap<>();
+        for (Course.InstructorCourse tmp : instructorsCourse) {
+            String[] ins = tmp.getInstructors().split(", ");
+            if (ins.length == 1) {
+                //not contain
+                if (!map.containsKey(ins[0])) {
+                    List<String> list1 = new ArrayList<>();
+                    list1.add(tmp.getCourseName());
+                    List<String> list2 = new ArrayList<>();
+                    List<List<String>> lists = new ArrayList<>();
+                    lists.add(list1);
+                    lists.add(list2);
+                    map.put(ins[0], lists);
+                } else {
+                    List<List<String>> lists = map.get(ins[0]);
+                    if (!lists.get(0).contains(tmp.getCourseName())){
+                        lists.get(0).add(tmp.getCourseName());
+                        Collections.sort(lists.get(0));
+                    }
+                    map.put(ins[0], lists);
+                }
+            } else {
+                for (String in : ins) {
+                    if (!map.containsKey(in)) {
+                        List<String> list1 = new ArrayList<>();
+                        List<String> list2 = new ArrayList<>();
+                        list2.add(tmp.getCourseName());
+                        List<List<String>> lists = new ArrayList<>();
+                        lists.add(list1);
+                        lists.add(list2);
+                        map.put(in, lists);
+                    } else {
+                        List<List<String>> lists = map.get(in);
+                        if (!lists.get(1).contains(tmp.getCourseName())){
+                            lists.get(1).add(tmp.getCourseName());
+                            Collections.sort(lists.get(1));
+                        }
+                        map.put(in, lists);
+                    }
+                }
+
+            }
+        }
+        return map;
     }
 
     //4
@@ -465,6 +515,7 @@ class Course {
         double avgMidAge;
         double avgPcOfMale;
         double avgPcOfBachelor;
+
         public RecommendCourse(String courseId, String courseName, double medianAge, double pcOfMale,
                                double pcOfBachelor, String launchDate, int age,
                                int gender, int isBachelorOrHigher, double avgMidAge,
@@ -499,7 +550,6 @@ class Course {
         public String getCourseName() {
             return courseName;
         }
-
 
 
     }
@@ -576,7 +626,7 @@ class Course {
         this.avgPcOfBachelor = avgPcOfBachelor;
     }
 
-    public String getCourseSubject(){
+    public String getCourseSubject() {
         return this.courseBasicInfo.courseSubject;
     }
 }
