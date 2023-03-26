@@ -76,51 +76,6 @@ public class OnlineCoursesAnalyzer {
     }
 
     //3
-    /*public Map<String, List<List<String>>> getCourseListOfInstructor() {
-        List<Course.InstructorCourse> instructorsCourse = courses.stream().map(l ->
-                        new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
-                .toList();
-        List<Course.InstructorCourse> instorCourseList = new ArrayList<>();
-        for (Course.InstructorCourse instructorCourse : instructorsCourse) {
-            String[] keys = instructorCourse.instructors.split(", ");
-            String value = instructorCourse.courseName;
-            if (keys.length == 1) {
-                instorCourseList.add(new Course.InstructorCourse(keys[0], value, 1));
-            } else {
-                for (String key : keys) {
-                    instorCourseList.add(new Course.InstructorCourse(key, value));
-                }
-            }
-        }
-
-        Map<String, List<Map<Integer, String>>> res = instorCourseList.stream().distinct().collect(
-                Collectors.groupingBy(Course.InstructorCourse::getInstructors,
-                        Collectors.mapping(a -> {
-                            Map<Integer, String> map = new HashMap<>();
-                            map.put(a.single, a.courseName);
-                            return map;
-                        }, Collectors.toList())));
-        Map<String, List<List<String>>> courseListOfInstructor = new HashMap<>();
-        for (Map.Entry<String, List<Map<Integer, String>>> entry : res.entrySet()) {
-            List<Map<Integer, String>> mapValue = entry.getValue();
-            List<String> list0 = new ArrayList<>();
-            List<String> list1 = new ArrayList<>();
-            for (Map<Integer, String> integerStringMap : mapValue) {
-                if (integerStringMap.containsKey(1)) {
-                    list0.add(integerStringMap.get(1));
-                } else {
-                    list1.add(integerStringMap.get(1));
-                }
-            }
-            List<List<String>> lists = new ArrayList<>();
-            lists.add(list0);
-            lists.add(list1);
-            String mapKey = entry.getKey();
-            courseListOfInstructor.put(mapKey, lists);
-        }
-        return courseListOfInstructor;
-    }*/
-
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
         List<Course.InstructorCourse> instructorsCourse = courses.stream().map(l ->
                         new Course.InstructorCourse(l.getInstructors(), l.getCourseTitle()))
@@ -172,33 +127,6 @@ public class OnlineCoursesAnalyzer {
     }
 
     //4
-    /*public List<String> getCourses(int topK, String by) {
-        List<String> topCourses = new ArrayList<>();
-        if (by.equals("hours")) {
-            Map<String, Double> tmp;
-            tmp = courses.stream().map(l ->
-                            new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
-                    .collect(Collectors.groupingBy(Course.TopCourse::getCourseName,
-                            Collectors.summingDouble(Course.TopCourse::getHours)));
-            topCourses = tmp.entrySet().stream().sorted(
-                            Comparator.comparing(Map.Entry<String, Double>::getValue).reversed()
-                                    .thenComparing(Map.Entry::getKey)).limit(topK)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-        } else {
-            Map<String, Integer> tmp;
-            tmp = courses.stream().map(l ->
-                            new Course.TopCourse(l.getCourseTitle(), l.getHours(), l.getPtcp()))
-                    .collect(Collectors.groupingBy(Course.TopCourse::getCourseName,
-                            Collectors.summingInt(Course.TopCourse::getPtcp)));
-            topCourses = tmp.entrySet().stream().sorted(
-                            Comparator.comparing(Map.Entry<String, Integer>::getValue).reversed()
-                                    .thenComparing(Map.Entry::getKey)).limit(topK)
-                    .map(Map.Entry::getKey)
-                    .collect(Collectors.toList());
-        }
-        return topCourses;
-    }*/
     public List<String> getCourses(int topK, String by) {
         List<String> topCourses = new ArrayList<>();
         if (by.equals("hours")) {
@@ -630,69 +558,3 @@ class Course {
         return this.courseBasicInfo.courseSubject;
     }
 }
-/*
-class Course {
-    String institution;
-    String number;
-    Date launchDate;
-    String title;
-    String instructors;
-    String subject;
-    int year;
-    int honorCode;
-    int participants;
-    int audited;
-    int certified;
-    double percentAudited;
-    double percentCertified;
-    double percentCertified50;
-    double percentVideo;
-    double percentForum;
-    double gradeHigherZero;
-    double totalHours;
-    double medianHoursCertification;
-    double medianAge;
-    double percentMale;
-    double percentFemale;
-    double percentDegree;
-
-    public Course(String institution, String number, Date launchDate,
-                  String title, String instructors, String subject,
-                  int year, int honorCode, int participants,
-                  int audited, int certified, double percentAudited,
-                  double percentCertified, double percentCertified50,
-                  double percentVideo, double percentForum, double gradeHigherZero,
-                  double totalHours, double medianHoursCertification,
-                  double medianAge, double percentMale, double percentFemale,
-                  double percentDegree) {
-        this.institution = institution;
-        this.number = number;
-        this.launchDate = launchDate;
-        if (title.startsWith("\"")) title = title.substring(1);
-        if (title.endsWith("\"")) title = title.substring(0, title.length() - 1);
-        this.title = title;
-        if (instructors.startsWith("\"")) instructors = instructors.substring(1);
-        if (instructors.endsWith("\"")) instructors = instructors.substring(0, instructors.length() - 1);
-        this.instructors = instructors;
-        if (subject.startsWith("\"")) subject = subject.substring(1);
-        if (subject.endsWith("\"")) subject = subject.substring(0, subject.length() - 1);
-        this.subject = subject;
-        this.year = year;
-        this.honorCode = honorCode;
-        this.participants = participants;
-        this.audited = audited;
-        this.certified = certified;
-        this.percentAudited = percentAudited;
-        this.percentCertified = percentCertified;
-        this.percentCertified50 = percentCertified50;
-        this.percentVideo = percentVideo;
-        this.percentForum = percentForum;
-        this.gradeHigherZero = gradeHigherZero;
-        this.totalHours = totalHours;
-        this.medianHoursCertification = medianHoursCertification;
-        this.medianAge = medianAge;
-        this.percentMale = percentMale;
-        this.percentFemale = percentFemale;
-        this.percentDegree = percentDegree;
-    }
-}*/
